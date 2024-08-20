@@ -20,7 +20,17 @@ describe('token-related functions', () => {
     })
     it('should split into chunks based on the token size for short English text, taking into account overlap count', () => {
       const input = 'Hello, world! This is a short sentence.'
-      expect(chunkByMaxTokens(input, 3, 1)).length(6)
+      const output = chunkByMaxTokens(input, 3, 1)
+
+      expect(output).length(6)
+      expect(output).toStrictEqual([
+          "Hello, world",
+           "Hello, world! This ",
+           " This is a ",
+           " a short ",
+           " short sentence",
+           " short sentence.",
+      ])
     })
 
     it('should split into chunks based on the token size for short German text with umlauts', () => {

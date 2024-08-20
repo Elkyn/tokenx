@@ -122,7 +122,7 @@ export function approximateTokenChunks(input: string): TokenCount[] {
     let count = 0
     if (WHITESPACE_RE.test(token)) {
       // Don't count whitespace as a token
-      continue
+      count = 0
     }
     else if (CJK_RE.test(token)) {
       // For CJK languages, each character is usually a separate token
