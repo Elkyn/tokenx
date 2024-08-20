@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   approximateMaxTokenSize,
   approximateTokenSize,
+  chunkByMaxTokens,
   getModelContextSize,
   isWithinTokenLimit,
 } from '../src/index'
@@ -12,6 +13,32 @@ import {
 const fixturesDir = fileURLToPath(new URL('fixtures', import.meta.url))
 
 describe('token-related functions', () => {
+  describe('chunkByMaxTokens', () => {
+    it('should split into chunks based on the token size for short English text', () => {
+      const input = 'Hello, world! This is a short sentence.'
+      expect(chunkByMaxTokens(input, 5)).length(3)
+    })
+
+    it('should split into chunks based on the token size for short German text with umlauts', () => {
+      const input = 'Die pünktlich gewünschte Trüffelfüllung im übergestülpten Würzkümmel-Würfel ist kümmerlich und dürfte fürderhin zu Rüffeln in Hülle und Fülle führen'
+      expect(chunkByMaxTokens(input, 5)).length(12)
+    })
+
+    it('should split into chunks based on the token size for English ebook', async () => {
+      const input = await readFile(join(fixturesDir, 'ebooks/pg5200.txt'), 'utf-8')
+      expect(chunkByMaxTokens(input, 1000)).length(34)
+    })
+
+    it('should split into chunks based on the token size for German ebook', async () => {
+      const input = await readFile(join(fixturesDir, 'ebooks/pg22367.txt'), 'utf-8')
+      expect(chunkByMaxTokens(input, 1000)).length(35)
+    })
+
+    it('should split into chunks based on the token size for Chinese ebook', async () => {
+      const input = await readFile(join(fixturesDir, 'ebooks/pg7337.txt'), 'utf-8')
+      expect(chunkByMaxTokens(input, 1000)).length(12)
+    })
+  })
   describe('approximateTokenSize', () => {
     it('should approximate the token size for short English text', () => {
       const input = 'Hello, world! This is a short sentence.'

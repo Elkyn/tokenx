@@ -64,16 +64,40 @@ const LANGUAGE_METRICS = [
   { regex: /[äöüßẞ]/i, averageCharsPerToken: 3 },
 ]
 
-/**
- * Estimate the number of tokens in a string.
- */
-export function approximateTokenSize(input: string) {
+interface TokenCount {
+  token: string
+  count: number
+}
+
+export function chunkByMaxTokens(input: string, maxTokens: number): string[] {
+  const counts = approximateTokenChunks(input)
+  const chunks: string[] = []
+  let chunk = ''
+  let chunkSize = 0
+
+  for (const { token, count } of counts) {
+    if (chunkSize + count > maxTokens) {
+      chunks.push(chunk)
+      chunk = ''
+      chunkSize = 0
+    }
+
+    chunk += token
+    chunkSize += count
+  }
+  chunks.push(chunk)
+
+  return chunks
+}
+
+export function approximateTokenChunks(input: string): TokenCount[] {
   // Split by whitespace, punctuation, and other special characters
   const roughTokens = input
     .split(/(\s+|[.,!?;'"„“”‘’\-(){}[\]<>:/\\|@#$%^&*+=`~]+)/)
     .filter(Boolean)
 
-  let tokenCount = 0
+  const tokenCounts: TokenCount[] = []
+
   for (const token of roughTokens) {
     let averageCharsPerToken: number | undefined
     for (const language of LANGUAGE_METRICS) {
@@ -83,38 +107,48 @@ export function approximateTokenSize(input: string) {
       }
     }
 
+    let count = 0
     if (WHITESPACE_RE.test(token)) {
       // Don't count whitespace as a token
       continue
     }
     else if (CJK_RE.test(token)) {
       // For CJK languages, each character is usually a separate token
-      tokenCount += Array.from(token).length
+      count = Array.from(token).length
     }
     else if (NUMERIC_SEQUENCE_RE.test(token)) {
       // Numeric sequences are often a single token, regardless of length
-      tokenCount += 1
+      count = 1
     }
     else if (token.length <= 3) {
       // Short tokens are often a single token
-      tokenCount += 1
+      count = 1
     }
     else if (PUNCTUATION_RE.test(token)) {
       // Punctuation is often a single token, but multiple punctuations are often split
-      tokenCount += token.length > 1 ? Math.ceil(token.length / 2) : 1
+      count = token.length > 1 ? Math.ceil(token.length / 2) : 1
     }
     else if (ALPHANUMERIC_RE.test(token) || averageCharsPerToken) {
       // Use language-specific average characters per token or default to average
-      tokenCount += Math.ceil(token.length / (averageCharsPerToken ?? DEFAULT_AVERAGE_CHARS_PER_TOKEN))
+      count = Math.ceil(token.length / (averageCharsPerToken ?? DEFAULT_AVERAGE_CHARS_PER_TOKEN))
     }
     else {
       // For other characters (like emojis or special characters), or languages
       // like Arabic, Hebrew and Greek, count each as a token
-      tokenCount += Array.from(token).length
+      count = Array.from(token).length
     }
+
+    tokenCounts.push({ token, count })
   }
 
-  return tokenCount
+  return tokenCounts
+}
+
+/**
+ * Estimate the number of tokens in a string.
+ */
+export function approximateTokenSize(input: string) {
+  return approximateTokenChunks(input).reduce((acc, { count }) => acc + count, 0)
 }
 
 /**
