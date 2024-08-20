@@ -1,7 +1,7 @@
 {
   "name": "elkyn-tokenx",
   "type": "module",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "GPT token estimation and context size utilities without a full tokenizer",
   "author": "Johann Schopplich <hello@johannschopplich.com>",
   "license": "MIT",

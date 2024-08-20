@@ -68,26 +68,38 @@ interface TokenCount {
   token: string
   count: number
 }
-
-export function chunkByMaxTokens(input: string, maxTokens: number): string[] {
+export function chunkByMaxTokens(input: string, maxTokens: number, overlap: number = 0): string[] {
   const counts = approximateTokenChunks(input)
-  const chunks: string[] = []
-  let chunk = ''
-  let chunkSize = 0
+  const chunks: TokenCount[][] = []
 
-  for (const { token, count } of counts) {
-    if (chunkSize + count > maxTokens) {
+  let chunk: TokenCount[] = []
+  let count = 0
+  for (const token of counts) {
+    if (count + token.count > maxTokens) {
       chunks.push(chunk)
-      chunk = ''
-      chunkSize = 0
+      if (overlap > 0) {
+        let i = chunk.length - 1
+        count = 0
+
+        while (i-- && count < overlap) {
+          count += chunk[i].count
+        }
+        chunk = chunk.slice(i)
+      }
+      else {
+        chunk = []
+        count = 0
+      }
     }
 
-    chunk += token
-    chunkSize += count
+    chunk.push(token)
+    count += token.count
   }
-  chunks.push(chunk)
+  if (chunk.length > 0) {
+    chunks.push(chunk)
+  }
 
-  return chunks
+  return chunks.map(chunk => chunk.map(({ token }) => token).join(''))
 }
 
 export function approximateTokenChunks(input: string): TokenCount[] {

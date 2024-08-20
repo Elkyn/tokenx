@@ -18,6 +18,10 @@ describe('token-related functions', () => {
       const input = 'Hello, world! This is a short sentence.'
       expect(chunkByMaxTokens(input, 5)).length(3)
     })
+    it('should split into chunks based on the token size for short English text, taking into account overlap count', () => {
+      const input = 'Hello, world! This is a short sentence.'
+      expect(chunkByMaxTokens(input, 3, 1)).length(6)
+    })
 
     it('should split into chunks based on the token size for short German text with umlauts', () => {
       const input = 'Die pünktlich gewünschte Trüffelfüllung im übergestülpten Würzkümmel-Würfel ist kümmerlich und dürfte fürderhin zu Rüffeln in Hülle und Fülle führen'
@@ -37,6 +41,10 @@ describe('token-related functions', () => {
     it('should split into chunks based on the token size for Chinese ebook', async () => {
       const input = await readFile(join(fixturesDir, 'ebooks/pg7337.txt'), 'utf-8')
       expect(chunkByMaxTokens(input, 1000)).length(12)
+    })
+    it('should split into chunks based on the token size for Chinese ebook, taking into account overlap count', async () => {
+      const input = await readFile(join(fixturesDir, 'ebooks/pg7337.txt'), 'utf-8')
+      expect(chunkByMaxTokens(input, 1000, 200)).length(15)
     })
   })
   describe('approximateTokenSize', () => {
